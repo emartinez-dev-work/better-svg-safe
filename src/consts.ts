@@ -18,6 +18,7 @@ export const SUPPORTED_LANGUAGES = [
   'astro',
   'ejs',
   'erb',
+  'django-html',
   'html',
   'javascript',
   'javascriptreact',

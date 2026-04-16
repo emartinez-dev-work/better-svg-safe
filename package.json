@@ -37,6 +37,7 @@
     "onLanguage:typescriptreact",
     "onLanguage:svelte",
     "onLanguage:vue",
+    "onLanguage:django-html",
     "onLanguage:liquid"
   ],
   "categories": [
