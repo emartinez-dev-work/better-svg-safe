@@ -162,7 +162,7 @@
     "copy-webview": "mkdir -p dist/webview && cp src/webview/*.html src/webview/*.css src/webview/*.js dist/webview/",
     "test": "node --import tsx --test src/*.test.ts",
     "test:vscode": "vscode-test",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src"
   },
   "devDependencies": {
     "@types/node": "^18.15.0",
