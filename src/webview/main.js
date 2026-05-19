@@ -44,6 +44,7 @@ const vscode = acquireVsCodeApi()
   let panStartX = 0
   let panStartY = 0
   let isAltPressed = false
+  let svgFitFrame = null
 
   // Initialize color
   colorSwatch.style.backgroundColor = currentColor
@@ -137,7 +138,12 @@ const vscode = acquireVsCodeApi()
   }
 
   const scheduleSvgFit = () => {
-    window.requestAnimationFrame(() => {
+    if (svgFitFrame !== null) {
+      return
+    }
+
+    svgFitFrame = window.requestAnimationFrame(() => {
+      svgFitFrame = null
       fitSvgToPreview()
     })
   }
@@ -308,12 +314,12 @@ const vscode = acquireVsCodeApi()
 
   if ('ResizeObserver' in window) {
     const resizeObserver = new ResizeObserver(() => {
-      fitSvgToPreview()
+      scheduleSvgFit()
     })
     resizeObserver.observe(preview)
   } else {
     window.addEventListener('resize', () => {
-      fitSvgToPreview()
+      scheduleSvgFit()
     })
   }
 
