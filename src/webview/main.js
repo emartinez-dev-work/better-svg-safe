@@ -74,13 +74,19 @@ const vscode = acquireVsCodeApi()
 
     const width = Number.parseFloat(svg.getAttribute('width') ?? '')
     const height = Number.parseFloat(svg.getAttribute('height') ?? '')
+    const rect = svg.getBoundingClientRect()
+    const fallbackWidth = Number.isFinite(width) && width > 0 ? width : rect.width
+    const fallbackHeight = Number.isFinite(height) && height > 0 ? height : rect.height
 
-    if (Number.isFinite(width) && Number.isFinite(height) && (width > 0 || height > 0)) {
+    if (
+      (Number.isFinite(fallbackWidth) && fallbackWidth > 0) ||
+      (Number.isFinite(fallbackHeight) && fallbackHeight > 0)
+    ) {
       return {
         x: 0,
         y: 0,
-        width: Math.max(width, 1),
-        height: Math.max(height, 1)
+        width: Math.max(fallbackWidth, 1),
+        height: Math.max(fallbackHeight, 1)
       }
     }
 
