@@ -326,10 +326,16 @@ function getAttribute (attrs: string, name: string): string | null {
 }
 
 function omitAttributes (attrs: string, names: string[]): string {
-  return names.reduce((result, name) => {
+  const result = names.reduce((currentAttrs, name) => {
     const escapedName = escapeRegExp(name)
-    return result.replace(new RegExp(`\\s*\\b${escapedName}\\s*=\\s*(["']).*?\\1`, 'gi'), '')
+    return currentAttrs.replace(new RegExp(`\\s*\\b${escapedName}\\s*=\\s*(["']).*?\\1`, 'gi'), '')
   }, attrs)
+
+  if (result.length > 0 && !/^\s/.test(result)) {
+    return ` ${result}`
+  }
+
+  return result
 }
 
 function escapeRegExp (value: string): string {
