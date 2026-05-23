@@ -2,6 +2,12 @@
 
 All notable changes to the "Better SVG Safe" extension will be documented in this file.
 
+## [0.4.5] - 2026-05-24
+
+### Changed
+
+- Updated the Marketplace gallery banner color to match the Better SVG Safe visual identity.
+
 ## [0.4.4] - 2026-05-23
 
 ### Changed

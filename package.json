@@ -2,7 +2,7 @@
   "name": "better-svg-safe",
   "displayName": "Better SVG Safe",
   "description": "Preview, inspect, and safely optimize SVGs with color, zoom, Code Interactive, and SVGO controls.",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "publisher": "emartinez-dev-work",
   "author": {
     "name": "emartinez-dev-work",
@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "icon": "./static/icon.png",
   "galleryBanner": {
-    "color": "#df6c31",
+    "color": "#130b24",
     "theme": "dark"
   },
   "repository": {
