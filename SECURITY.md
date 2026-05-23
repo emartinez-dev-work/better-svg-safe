@@ -2,26 +2,15 @@
 
 ## Supported Versions
 
-We release security updates for the following versions:
+This is a personal fork published as-is, without a formal maintenance or support schedule.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| Version | Status |
+| ------- | ------ |
+| 0.4.x   | Personal fork, no guaranteed support |
 
-## Reporting a Vulnerability
+## Vulnerability Reports
 
-If you discover a security vulnerability in Better SVG, please report it by:
-
-1. **Email**: Send details to hi@midu.dev
-2. **GitHub**: Use the [private vulnerability reporting](https://github.com/midudev/better-svg/security/advisories/new) feature
-
-Please include:
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if any)
-
-We will respond within 48 hours and work on a fix as soon as possible.
+There is no formal vulnerability response process for this personal fork. If you choose to report something through GitHub, response times and fixes are not guaranteed.
 
 ## Security Measures
 
@@ -29,7 +18,7 @@ This extension:
 - Does not collect or transmit user data
 - Does not make external network requests (except for SVGO optimization, which runs locally)
 - Uses VS Code's Content Security Policy for webviews
-- Is open source and can be audited at https://github.com/midudev/better-svg
+- Is open source and can be audited at https://github.com/emartinez-dev-work/better-svg-safe
 - All code is non-obfuscated and readable
 
 ## License

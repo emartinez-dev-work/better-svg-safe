@@ -1,5 +1,6 @@
 /**
  * Copyright 2025 Miguel Ángel Durán
+ * Modifications Copyright 2026 emartinez-dev-work
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,7 @@ let gutterPreview: SvgGutterPreview
 export function activate (context: vscode.ExtensionContext) {
   try {
     if (!context.extensionUri) {
-      vscode.window.showErrorMessage('Better SVG: Extension context.extensionUri is undefined!')
+      vscode.window.showErrorMessage('Better SVG Safe: Extension context.extensionUri is undefined!')
       throw new Error('Extension context.extensionUri is undefined')
     }
 
@@ -220,6 +221,7 @@ export function activate (context: vscode.ExtensionContext) {
           return
         }
 
+        previewProvider?.disableInteractiveMode()
         await optimizeSvgDocument(document)
       })
     )
@@ -235,6 +237,7 @@ export function activate (context: vscode.ExtensionContext) {
           }
 
           try {
+            previewProvider?.disableInteractiveMode()
             const uri = vscode.Uri.parse(args.uri)
             const document = await vscode.workspace.openTextDocument(uri)
             await vscode.window.showTextDocument(document)
@@ -262,7 +265,7 @@ export function activate (context: vscode.ExtensionContext) {
     )
   } catch (error: any) {
     vscode.window.showErrorMessage(
-      'Better SVG: Failed to activate extension!\n' +
+      'Better SVG Safe: Failed to activate extension!\n' +
       `Error: ${error.message}\n` +
       `Stack: ${error.stack?.substring(0, 200)}`
     )

@@ -1,5 +1,6 @@
 /**
  * Copyright 2025 Miguel Ángel Durán
+ * Modifications Copyright 2026 emartinez-dev-work
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +17,68 @@
 
 import * as vscode from 'vscode'
 import * as fs from 'fs'
-import { optimizeSvgDocument } from './svgOptimizationService'
+import { formatSvgDocument, optimizeSvgDocument } from './svgOptimizationService'
+
+function findLineNumber (lineStarts: number[], offset: number): number {
+  let low = 0
+  let high = lineStarts.length - 1
+
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2)
+    const lineStart = lineStarts[middle]
+    const nextLineStart = lineStarts[middle + 1] ?? Number.POSITIVE_INFINITY
+
+    if (offset < lineStart) {
+      high = middle - 1
+    } else if (offset >= nextLineStart) {
+      low = middle + 1
+    } else {
+      return middle
+    }
+  }
+
+  return 0
+}
+
+function getLineStarts (content: string): number[] {
+  const lineStarts = [0]
+
+  for (let index = 0; index < content.length; index++) {
+    const character = content[index]
+
+    if (character === '\r') {
+      if (content[index + 1] === '\n') {
+        index++
+      }
+      lineStarts.push(index + 1)
+    } else if (character === '\n') {
+      lineStarts.push(index + 1)
+    }
+  }
+
+  return lineStarts
+}
+
+function openingTagAlreadyHasLineNumber (content: string, offset: number): boolean {
+  const tagEnd = content.indexOf('>', offset)
+  if (tagEnd === -1) {
+    return false
+  }
+
+  return /\sdata-besvg-line\s*=/.test(content.slice(offset, tagEnd))
+}
+
+function injectLineNumbers (svgContent: string): string {
+  const lineStarts = getLineStarts(svgContent)
+
+  return svgContent.replace(/<([A-Za-z][\w:.-]*)(?=[\s/>])/g, (match, _tagName, offset) => {
+    if (openingTagAlreadyHasLineNumber(svgContent, offset)) {
+      return match
+    }
+
+    return `${match} data-besvg-line="${findLineNumber(lineStarts, offset)}"`
+  })
+}
 
 export class SvgPreviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'betterSvg.preview'
@@ -51,7 +113,7 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
     }
 
     // Handle messages from webview
-    webviewView.webview.onDidReceiveMessage(e => {
+    webviewView.webview.onDidReceiveMessage(async e => {
       switch (e.type) {
         case 'update':
           if (this._currentDocument) {
@@ -60,7 +122,23 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
           break
         case 'optimize':
           if (this._currentDocument) {
-            optimizeSvgDocument(this._currentDocument)
+            this.disableInteractiveMode()
+            await optimizeSvgDocument(this._currentDocument)
+          }
+          break
+        case 'enableInteractive':
+          if (this._currentDocument) {
+            try {
+              await formatSvgDocument(this._currentDocument)
+              this.updatePreview(this._currentDocument)
+            } catch (error) {
+              vscode.window.showErrorMessage(`Failed to format SVG for interactive mode: ${error}`)
+            }
+          }
+          break
+        case 'selectElement':
+          if (this._currentDocument) {
+            await this.revealDocumentLine(this._currentDocument, e.line, false, true)
           }
           break
       }
@@ -72,7 +150,7 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
       this._currentDocument = document
       this._view.webview.postMessage({
         type: 'update',
-        content: document.getText()
+        content: injectLineNumbers(document.getText())
       })
     }
   }
@@ -86,9 +164,17 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  public disableInteractiveMode () {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: 'disableInteractiveMode'
+      })
+    }
+  }
+
   private getHtmlForWebview (webview: vscode.Webview, document: vscode.TextDocument | null): string {
     try {
-      const svgContent = document ? document.getText() : '<svg></svg>'
+      const svgContent = injectLineNumbers(document ? document.getText() : '<svg></svg>')
 
       // Get default color from configuration
       const config = vscode.workspace.getConfiguration('betterSvg')
@@ -97,7 +183,7 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
       // Debug info
       const extensionUri = this.context.extensionUri
       if (!extensionUri) {
-        vscode.window.showErrorMessage('Better SVG: extensionUri is undefined!')
+        vscode.window.showErrorMessage('Better SVG Safe: extensionUri is undefined!')
         throw new Error('extensionUri is undefined')
       }
 
@@ -114,7 +200,7 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
       const htmlPath = htmlUri.fsPath
 
       if (!htmlPath) {
-        vscode.window.showErrorMessage(`Better SVG: htmlPath is undefined! URI: ${htmlUri.toString()}`)
+        vscode.window.showErrorMessage(`Better SVG Safe: htmlPath is undefined! URI: ${htmlUri.toString()}`)
         throw new Error('htmlPath is undefined')
       }
 
@@ -123,7 +209,7 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
         html = fs.readFileSync(htmlPath, 'utf8')
       } catch (readError: any) {
         vscode.window.showErrorMessage(
-          'Better SVG: Failed to read HTML file!\n' +
+          'Better SVG Safe: Failed to read HTML file!\n' +
           `Path: ${htmlPath}\n` +
           `Error: ${readError.message}`
         )
@@ -141,7 +227,7 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
       return html
     } catch (error: any) {
       vscode.window.showErrorMessage(
-        'Better SVG: Error in getHtmlForWebview!\n' +
+        'Better SVG Safe: Error in getHtmlForWebview!\n' +
         `Message: ${error.message}\n` +
         `Stack: ${error.stack?.substring(0, 200)}`
       )
@@ -157,5 +243,32 @@ export class SvgPreviewProvider implements vscode.WebviewViewProvider {
       content
     )
     vscode.workspace.applyEdit(edit)
+  }
+
+  private async revealDocumentLine (
+    document: vscode.TextDocument,
+    line: unknown,
+    preserveFocus: boolean,
+    shouldSelect: boolean
+  ) {
+    if (typeof line !== 'number' || !Number.isInteger(line) || line < 0 || line >= document.lineCount) {
+      return
+    }
+
+    const lineNumber = line
+    const textLine = document.lineAt(lineNumber)
+    const column = textLine.firstNonWhitespaceCharacterIndex
+    const position = new vscode.Position(lineNumber, column)
+    const range = new vscode.Range(position, position)
+    const editor = await vscode.window.showTextDocument(document, {
+      preserveFocus,
+      preview: false
+    })
+
+    if (shouldSelect) {
+      editor.selection = new vscode.Selection(position, position)
+    }
+
+    editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport)
   }
 }

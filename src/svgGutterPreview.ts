@@ -1,5 +1,6 @@
 /**
  * Copyright 2025 Miguel Ángel Durán
+ * Modifications Copyright 2026 emartinez-dev-work
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +102,7 @@ export class SvgHoverProvider implements vscode.HoverProvider {
 
     if (commandArgs) {
       const encodedArgs = encodeURIComponent(JSON.stringify(commandArgs))
-      markdown.appendMarkdown(`[⚡ Optimizar SVG](command:betterSvg.optimizeFromHover?${encodedArgs})`)
+      markdown.appendMarkdown(`[⚡ Optimize SVG](command:betterSvg.optimizeFromHover?${encodedArgs})`)
     }
 
     return new vscode.Hover(markdown, range)

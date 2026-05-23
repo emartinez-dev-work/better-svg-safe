@@ -1,5 +1,6 @@
 /**
  * Copyright 2025 Miguel Ángel Durán
+ * Modifications Copyright 2026 emartinez-dev-work
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,6 +152,35 @@ button {
   opacity: 1;
 }
 
+.interactive-toggle-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s;
+  padding: 4px;
+  margin: -4px;
+}
+
+.interactive-toggle-wrapper.active {
+  color: var(--vscode-focusBorder);
+}
+
+.interactive-toggle-wrapper svg {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+  opacity: 0.8;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.interactive-toggle-wrapper:hover svg,
+.interactive-toggle-wrapper.active svg {
+  opacity: 1;
+}
+
 .optimize-wrapper {
   display: flex;
   align-items: center;
@@ -270,4 +300,8 @@ input[type="color"] {
   max-width: none;
   max-height: none;
   display: block;
+}
+
+[data-besvg-highlight-root] {
+  pointer-events: none;
 }

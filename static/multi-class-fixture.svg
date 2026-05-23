@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+  <defs>
+    <style>
+      .cls-1,.cls-3,.cls-6{fill:#fff}.cls-1,.cls-2,.cls-3,.cls-5{stroke:#15323a;stroke-width:9.43px}.cls-2{fill:#2eb2ab}.cls-3,.cls-5{stroke-miterlimit:10}.cls-5{fill:#15323a}
+    </style>
+  </defs>
+  <path id="g1" d="M10 10h60v60H10z" class="cls-1"/>
+  <path id="g2" d="M100 10h60v60h-60z" class="cls-1"/>
+  <path id="g3" d="M190 10h60v60h-60z" class="cls-1"/>
+  <path id="g4" d="M280 10h60v60h-60z" class="cls-1"/>
+  <circle id="g5" cx="40" cy="120" r="25" class="cls-2"/>
+  <circle id="g6" cx="130" cy="120" r="25" class="cls-2"/>
+  <circle id="g7" cx="220" cy="120" r="25" class="cls-2"/>
+  <circle id="g8" cx="310" cy="120" r="25" class="cls-2"/>
+  <circle id="g9" cx="400" cy="120" r="25" class="cls-2"/>
+  <path id="g10" d="M10 180h60l-30 60Z" class="cls-3"/>
+  <path id="g11" d="M100 180h60l-30 60Z" class="cls-3"/>
+  <path id="g12" d="M190 180h60l-30 60Z" style="fill:#15323a"/>
+  <path id="g13" d="M280 180h60l-30 60Z" class="cls-5"/>
+  <path id="g14" d="M370 180h60l-30 60Z" class="cls-5"/>
+  <circle id="g15" cx="40" cy="290" r="15" class="cls-6"/>
+  <circle id="g16" cx="130" cy="290" r="15" class="cls-6"/>
+  <circle id="g17" cx="220" cy="290" r="15" class="cls-6"/>
+  <circle id="g18" cx="310" cy="290" r="15" class="cls-6"/>
+  <circle id="g19" cx="400" cy="290" r="15" class="cls-6"/>
+  <path id="g20" d="M10 340h480v40H10z" style="fill:#2eb2ab"/>
+</svg>

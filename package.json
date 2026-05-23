@@ -1,13 +1,12 @@
 {
-  "name": "better-svg",
-  "displayName": "Better SVG",
-  "description": "Preview your SVG with color picker, zoom controls, and SVGO optimization.",
+  "name": "better-svg-safe",
+  "displayName": "Better SVG Safe",
+  "description": "Preview, inspect, and safely optimize SVGs with color, zoom, Code Interactive, and SVGO controls.",
   "version": "0.4.4",
-  "publisher": "midudev",
+  "publisher": "emartinez-dev-work",
   "author": {
-    "name": "Miguel Ángel Durán",
-    "email": "hi@midu.dev",
-    "url": "https://midu.dev"
+    "name": "emartinez-dev-work",
+    "url": "https://github.com/emartinez-dev-work"
   },
   "pricing": "Free",
   "license": "Apache-2.0",
@@ -18,14 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/midudev/better-svg"
+    "url": "https://github.com/emartinez-dev-work/better-svg-safe"
   },
-  "bugs": {
-    "url": "https://github.com/midudev/better-svg/issues",
-    "email": "hi@midu.dev"
-  },
-  "homepage": "https://github.com/midudev/better-svg#readme",
-  "qna": "marketplace",
+  "homepage": "https://github.com/emartinez-dev-work/better-svg-safe#readme",
+  "qna": false,
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "vscode": "^1.85.0",
@@ -68,11 +63,14 @@
   "main": "./dist/extension.js",
   "files": [
     "static/icon.png",
+    "static/screenshot.png",
     "dist/webview",
     "dist/extension.js",
     "package.json",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md"
   ],
   "contributes": {
     "views": {
@@ -101,13 +99,13 @@
       {
         "command": "betterSvg.optimize",
         "title": "Optimize SVG",
-        "category": "Better SVG",
+        "category": "Better SVG Safe",
         "icon": "$(zap)"
       },
       {
         "command": "betterSvg.optimizeFromHover",
         "title": "Optimize SVG from Hover",
-        "category": "Better SVG",
+        "category": "Better SVG Safe",
         "icon": "$(zap)"
       }
     ],
@@ -127,7 +125,7 @@
       ]
     },
     "configuration": {
-      "title": "Better SVG",
+      "title": "Better SVG Safe",
       "properties": {
         "betterSvg.autoReveal": {
           "type": "boolean",
@@ -179,7 +177,7 @@
     "package": "pnpm check-types && node esbuild.js --production && pnpm copy-webview",
     "check": "pnpm check-types",
     "check-types": "tsc --noEmit",
-    "copy-webview": "mkdir -p dist/webview && cp src/webview/*.html src/webview/*.css src/webview/*.js dist/webview/",
+    "copy-webview": "node -e \"const fs=require('fs'),path=require('path');fs.mkdirSync('dist/webview',{recursive:true});['html','css','js'].forEach(ext=>fs.readdirSync('src/webview').filter(f=>f.endsWith('.'+ext)).forEach(f=>fs.copyFileSync(path.join('src/webview',f),path.join('dist/webview',f))))\"",
     "test": "node --import tsx --test src/*.test.ts",
     "test:vscode": "vscode-test",
     "lint": "eslint src"

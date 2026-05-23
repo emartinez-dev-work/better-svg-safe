@@ -2,3 +2,8 @@ node_modules
 dist
 *.vsix
 .DS_Store
+docs
+.claude
+.agents
+# Local-only SVG fixtures (private assets the user wants to test against)
+src/__fixtures-local__/

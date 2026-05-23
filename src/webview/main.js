@@ -1,5 +1,6 @@
 /**
  * Copyright 2025 Miguel Ángel Durán
+ * Modifications Copyright 2026 emartinez-dev-work
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +28,7 @@ const vscode = acquireVsCodeApi()
   const toggleDarkBgWrapper = $('#toggleDarkBgWrapper')
   const centerIconWrapper = $('#centerIconWrapper')
   const optimizeWrapper = $('#optimizeWrapper')
+  const interactiveToggleWrapper = $('#interactiveToggleWrapper')
   const zoomLevel = $('#zoomLevel')
   const svgSize = $('#svgSize')
   const previewFillRatio = 0.8
@@ -34,6 +36,12 @@ const vscode = acquireVsCodeApi()
   // Get default color from the color picker value (set by template)
   let currentColor = colorPicker.value
   let isDarkBackground = false
+  let isInteractiveMode = false
+  let hoveredInteractiveElement = null
+  let boundMouseover = null
+  let boundMouseleave = null
+  let boundClick = null
+  let interactiveSvg = null
 
   // Zoom and pan state
   let scale = 1
@@ -182,6 +190,211 @@ const vscode = acquireVsCodeApi()
     }
   }
 
+  const setInteractiveControls = () => {
+    interactiveToggleWrapper.classList.toggle('active', isInteractiveMode)
+  }
+
+  const getInteractiveTarget = (target) => {
+    if (!target || typeof target.closest !== 'function') {
+      return null
+    }
+
+    const svg = svgWrapper.querySelector('svg')
+    const element = target.closest('[data-besvg-line]')
+    if (!svg || !element || element === svg || !svg.contains(element)) {
+      return null
+    }
+
+    if (element.closest('[data-besvg-highlight-root]')) {
+      return null
+    }
+
+    const line = Number.parseInt(element.getAttribute('data-besvg-line') ?? '', 10)
+    if (!Number.isInteger(line)) {
+      return null
+    }
+
+    return { element, line }
+  }
+
+  const createSvgElement = (tagName) => document.createElementNS('http://www.w3.org/2000/svg', tagName)
+
+  const findDirectHighlightChild = (parent, attribute, value) => (
+    Array.from(parent.children).find(child => child.getAttribute(attribute) === value)
+  )
+
+  const getHighlightLayer = (kind) => {
+    const svg = svgWrapper.querySelector('svg')
+    if (!svg) {
+      return null
+    }
+
+    let root = findDirectHighlightChild(svg, 'data-besvg-highlight-root', 'true')
+    if (!root) {
+      root = createSvgElement('g')
+      root.setAttribute('data-besvg-highlight-root', 'true')
+      root.setAttribute('aria-hidden', 'true')
+      root.style.pointerEvents = 'none'
+      svg.appendChild(root)
+    }
+
+    let layer = findDirectHighlightChild(root, 'data-besvg-highlight-layer', kind)
+    if (!layer) {
+      layer = createSvgElement('g')
+      layer.setAttribute('data-besvg-highlight-layer', kind)
+      layer.style.pointerEvents = 'none'
+      root.appendChild(layer)
+    }
+
+    return { svg, layer }
+  }
+
+  const clearHighlightLayer = (kind) => {
+    const svg = svgWrapper.querySelector('svg')
+    const root = svg ? findDirectHighlightChild(svg, 'data-besvg-highlight-root', 'true') : null
+    const layer = root ? findDirectHighlightChild(root, 'data-besvg-highlight-layer', kind) : null
+    if (layer) {
+      layer.textContent = ''
+    }
+  }
+
+  const applyHighlightStroke = (element, kind) => {
+    const strokeWidth = kind === 'selected' ? '2.5' : '2'
+    const elements = [element, ...element.querySelectorAll('*')]
+
+    for (const node of elements) {
+      node.removeAttribute('id')
+      node.removeAttribute('data-besvg-line')
+      node.setAttribute('fill', 'none')
+      node.setAttribute('stroke', '#007acc')
+      node.setAttribute('stroke-width', strokeWidth)
+      node.setAttribute('vector-effect', 'non-scaling-stroke')
+      node.setAttribute('pointer-events', 'none')
+      node.style.setProperty('fill', 'none', 'important')
+      node.style.setProperty('stroke', '#007acc', 'important')
+      node.style.setProperty('stroke-width', strokeWidth, 'important')
+      node.style.setProperty('vector-effect', 'non-scaling-stroke', 'important')
+      node.style.setProperty('pointer-events', 'none', 'important')
+    }
+  }
+
+  const applyRootRelativeTransform = (svg, sourceElement, clone) => {
+    if (typeof svg.getCTM !== 'function' || typeof sourceElement.getCTM !== 'function') {
+      return
+    }
+
+    const svgMatrix = svg.getCTM()
+    const elementMatrix = sourceElement.getCTM()
+    if (!svgMatrix || !elementMatrix) {
+      return
+    }
+
+    try {
+      const matrix = svgMatrix.inverse().multiply(elementMatrix)
+      clone.removeAttribute('transform')
+      clone.setAttribute(
+        'transform',
+        `matrix(${matrix.a} ${matrix.b} ${matrix.c} ${matrix.d} ${matrix.e} ${matrix.f})`
+      )
+    } catch {}
+  }
+
+  const renderHighlight = (kind, element) => {
+    const highlight = getHighlightLayer(kind)
+    if (!highlight) {
+      return
+    }
+
+    highlight.layer.textContent = ''
+    if (!element) {
+      return
+    }
+
+    const clone = element.cloneNode(true)
+    applyRootRelativeTransform(highlight.svg, element, clone)
+    applyHighlightStroke(clone, kind)
+    highlight.layer.appendChild(clone)
+  }
+
+  const clearHoverHighlight = () => {
+    hoveredInteractiveElement = null
+    clearHighlightLayer('hover')
+  }
+
+  const clearInteractiveSelection = () => {
+    clearHighlightLayer('selected')
+  }
+
+  const handleInteractiveMouseover = (e) => {
+    const target = getInteractiveTarget(e.target)
+    if (!target) {
+      clearHoverHighlight()
+      return
+    }
+
+    if (target.element === hoveredInteractiveElement) {
+      return
+    }
+
+    hoveredInteractiveElement = target.element
+    renderHighlight('hover', target.element)
+  }
+
+  const handleInteractiveClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const target = getInteractiveTarget(e.target)
+    if (!target) {
+      return
+    }
+
+    renderHighlight('selected', target.element)
+
+    vscode.postMessage({
+      type: 'selectElement',
+      line: target.line
+    })
+  }
+
+  const detachInteractiveListeners = () => {
+    if (interactiveSvg && boundMouseover) {
+      interactiveSvg.removeEventListener('mouseover', boundMouseover)
+    }
+
+    if (interactiveSvg && boundMouseleave) {
+      interactiveSvg.removeEventListener('mouseleave', boundMouseleave)
+    }
+
+    if (interactiveSvg && boundClick) {
+      interactiveSvg.removeEventListener('click', boundClick, true)
+    }
+
+    interactiveSvg = null
+    clearHoverHighlight()
+    clearInteractiveSelection()
+  }
+
+  const attachInteractiveListeners = () => {
+    if (!isInteractiveMode) {
+      return
+    }
+
+    const svg = svgWrapper.querySelector('svg')
+    if (!svg || interactiveSvg === svg) {
+      return
+    }
+
+    detachInteractiveListeners()
+    boundMouseover = boundMouseover ?? handleInteractiveMouseover
+    boundMouseleave = boundMouseleave ?? clearHoverHighlight
+    boundClick = boundClick ?? handleInteractiveClick
+    svg.addEventListener('mouseover', boundMouseover)
+    svg.addEventListener('mouseleave', boundMouseleave)
+    svg.addEventListener('click', boundClick, true)
+    interactiveSvg = svg
+  }
+
   colorPickerWrapper.addEventListener('click', () => {
     colorPicker.click()
   })
@@ -220,8 +433,34 @@ const vscode = acquireVsCodeApi()
     resetZoom()
   })
 
+  interactiveToggleWrapper.addEventListener('click', () => {
+    isInteractiveMode = !isInteractiveMode
+    setInteractiveControls()
+
+    if (isInteractiveMode) {
+      vscode.postMessage({
+        type: 'enableInteractive'
+      })
+      attachInteractiveListeners()
+    } else {
+      detachInteractiveListeners()
+      vscode.postMessage({
+        type: 'disableInteractive'
+      })
+    }
+  })
+
   // Optimize functionality
   optimizeWrapper.addEventListener('click', () => {
+    if (isInteractiveMode) {
+      isInteractiveMode = false
+      setInteractiveControls()
+      detachInteractiveListeners()
+      vscode.postMessage({
+        type: 'disableInteractive'
+      })
+    }
+
     vscode.postMessage({
       type: 'optimize'
     })
@@ -229,7 +468,7 @@ const vscode = acquireVsCodeApi()
 
   // Zoom and pan functionality
   preview.addEventListener('click', (e) => {
-    if(wasPanning) return;
+    if (wasPanning) return
 
     if (e.target === preview || e.target === svgWrapper || e.target.closest('svg')) {
       // Check both the stored state and the event's altKey
@@ -268,7 +507,7 @@ const vscode = acquireVsCodeApi()
 
   window.addEventListener('mousemove', (e) => {
     if (isPanning) {
-      wasPanning = true;
+      wasPanning = true
       translateX = e.clientX - panStartX
       translateY = e.clientY - panStartY
       updateTransform()
@@ -327,13 +566,21 @@ const vscode = acquireVsCodeApi()
   window.addEventListener('message', event => {
     const message = event.data
     if (message.type === 'update') {
-      updateSvgFileSize()
       updatePreviewWithColor(message.content)
-      resetZoom()
-    } else if (message.type === 'clear') {
       updateSvgFileSize()
-      svgWrapper.innerHTML = ''
       resetZoom()
+      attachInteractiveListeners()
+    } else if (message.type === 'clear') {
+      isInteractiveMode = false
+      setInteractiveControls()
+      detachInteractiveListeners()
+      svgWrapper.innerHTML = ''
+      updateSvgFileSize()
+      resetZoom()
+    } else if (message.type === 'disableInteractiveMode') {
+      isInteractiveMode = false
+      setInteractiveControls()
+      detachInteractiveListeners()
     }
   })
 })()
